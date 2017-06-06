@@ -1,0 +1,349 @@
+<!doctype html>
+<!--Reveal.js:
+- Press 's' to open speaker-notes pop-up window
+- Press ESC to enter the slide overview- Press 'b' to fade out to black screen
+- Change the background on a slide: <!-- .slide: data-background="#ff0000" -- >
+- PDF export using Chrome: https://github.com/hakimel/reveal.js/#pdf-export
+    + append 'index.html?print-pdf&showNotes' and scroll to the end before printing
+-->
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Pipelines luigi &amp; tests BDD behave</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/solarized.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+    <style>
+    .reveal {
+        background-image: url(../../VSCT_logo.png);
+        background-size: 10%;
+        background-repeat: no-repeat;
+        background-position: 95% 10%;
+        transition: background-size .5s ease-in-out;
+    }
+    .first-slide .reveal {
+        background-size: 15%;
+    }
+    .reveal section img {
+      border: none;
+      vertical-align: middle;
+    }
+    p > code, li > code, span > code {
+      color: #D05;
+    }
+    figure {
+      display: flex !important;
+      justify-content: center;
+    }
+    figcaption {
+      writing-mode: vertical-rl;
+      font-size: 1rem !important;
+    }
+    </style>
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section data-markdown data-separator="^\n\n\n" data-separator-vertical="^\n\n" data-notes="^Note:" data-charset="utf-8">
+					<textarea data-template>
+<!-- .element: data-state="first-slide" -->
+## Pipelines luigi & tests BDD behave
+<figure>
+    <img src="ceci-nest-pas-un-pipe.jpg" alt="Ceci n'est pas un pipe, mais un tuyau dans Mario" style="max-height: 35rem">
+    <figcaption>Modification d'un <a href="https://www.threadless.com/product/543/this_is_not_a_pipe">motif de T-shirt</a> par <a href="https://www.facebook.com/littlegdesign">
+Little g Design</a></figcaption>
+</figure>
+
+<small>3/10/2017</small>
+
+Note: qui utilise "pipeline" au féminin ?
+
+
+
+## Bonsoir !
+<div style="display: flex; align-items: center">
+  <img src="avatar.jpg" alt="Une image d'avatar" style="width: 30%; height: 30%; margin-right: 2rem">
+  <div style="display: flex; flex-direction: column; text-align: left">
+    <p>**Lucas Cimon**</p>
+    <p>https://chezsoi.org + [<img src="shaarli-icon.png" style="margin: 0; width: 3rem">](https://chezsoi.org/shaarli)</p>
+  </div>
+</div>
+Note: à VSCT depuis mars 2015
+
+
+
+## Voyages-Sncf Technologies
+
+<img src="vsct.png" alt="Liste des projets VSCT" style="max-height: 40rem">
+
+Note:
+- voyages-sncf.com: 1200 collaborateurs (dont 51% de femmes), 34 ans de moyen d'âge
+- VSCT = branche de Voyages-Sncf.com:
+  * +de 700 personnes, internes & prestas compris
+  * 3 sites: Paris, Lille, Nantes
+
+
+
+## Au menu
+<img src="luigi-logo.png" alt="Logo luigi" style="box-shadow: none">
++
+![Logo behave](behave_logo1.png)
+
+
+
+##  
+<img src="xsell-widget.png" alt="Capture d'écran du widget Xsell" style="max-height: 50rem">
+Note: capture d'écran de notre widget Xsell
+-> construction du référentiel d'offres ?
+
+
+
+## ETL
+![Schéma de fonctionnement d'un ETL](ETL-Process.png) <img src="elasticsearch-logo.png" alt="Logo ElasticSearch" class="fragment" style="max-width: 10rem">
+Note: batch d'agrégation & validation, avec comme destination un index ElasticSearch
+
+
+
+##  
+<!-- .slide: data-background="black" -->
+<img src="pipelines-screensaver.jpg" alt="L'économiseur d'écran Windows avec des tuyaux" style="max-height: 40rem">
+
+
+
+## luigi
+![Description des principaux concepts de luigi](luigi-concepts.jpg)
+Note:
+- direct acyclic graph
+- fournit: découpage en tâches imposées, gestion des dépendances, `resume` tasks on error
+- idéal pour du batch
+- limites:
+  * pas de scheduler "builtin" -> `cron`
+  * pas d'exécution distribuée
+  * nombre de tâches < 10 000
+Source: https://luigi.readthedocs.io/en/latest/design_and_limitations.html
+
+
+
+## Task breakdown
+<img src="task_breakdown.png" alt="Code source d'une Task luigi expliqué" style="max-height: 40rem">
+
+
+
+## Défis rencontrés
+- séparer données & métadonnées
+- exécution sélective:
+  * une seule tâche
+  * une branche
+- tâches "tampons" de cache (_staging_)
+- historisation & purge des anciennes données
+
+
+
+## luigi-utils
+Implémente tout ça, plus:
+- supervision des tâches
+- centralisation des logs
+- upload dans Elasticsearch
+- lecture / écriture de JSON itérative avec `ijson`
+Note:
+- supervision = temps d'exécution, resources consommées...
+- centralisation des logs: capture d'exceptions + envoie dans Graphite / Flume
+- upload dans Elasticsearch : en batch + avec bascule d'alias
+
+
+
+## behave
+<figure>
+    <img src="cucumber-snake.jpg" alt="Serpent en concombres" style="max-height: 35rem">
+    <figcaption>Photo issue du blog <a href="http://catholiccuisine.blogspot.fr/2012/03/ssss-snack-for-st-patricks-day.html">
+Catholic Cuisine</a></figcaption>
+</figure>
+= tests <em>Cucumber</em> pour **Python**
+Note:
+- test runner (not compatible with `pytest`)
+- cucumber-compatible output:
+  * https://github.com/behave/behave/issues/267
+  * notre solution: https://gist.github.com/Lucas-C/2ba14f253186e8df079219a3038e7d94
+
+
+## behave : gherkin
+```gherkin
+Feature: showing off behave
+
+  Scenario: run a simple test
+    Given we have behave installed
+    When we implement a test
+    Then behave will test it for us!
+```
+
+
+## behave : glue
+```python
+from behave import *
+
+@given('we have behave installed')
+def step_impl(context):
+    pass
+
+@when('we implement a test')
+def step_impl(context):
+    assert True is not False
+
+@then('behave will test it for us!')
+def step_impl(context):
+    assert context.failed is False
+```
+Note: demo -> `behave`
+
+
+
+## Avec luigi
+```python
+def run_luigi(etl_module, task_module, *luigi_args):
+    args = ['--local-scheduler', '--no-lock']
+    args += ['--module', etl_module, task_module]
+    args.extend(luigi_args)
+    Register.clear_instance_cache()  # very important
+    with supervision(disable=True):  # in-house
+        luigi.interface._run(args)
+```
+Note:
+- `enable_supervision`
+
+
+
+## Exemple
+```gherkin
+  Scénario: Import des offres KrazyGlue
+    Soit les informations de mapping suivantes :
+      | RRCode | regionId | cityName |
+      | FRPAR  |   2734   |   Paris  |
+      | FRNTE  |   2603   |  Nantes  |
+    Quand le catalogue exécute la tâche KrazyGlueTransformationTask
+    Alors on récupère 4 offres KrazyGlue
+```
+
+
+
+## Exemple
+```python
+@given('les informations de mapping suivantes')
+def set_destinations(ctx):
+    destis = {row[0]: {'regionId': row[1], 'cityName': row[2]}
+              for row in ctx.table}
+    ctx.rid_mapping = create_fixture(destis)
+
+@when('le catalogue exécute la tâche KrazyGlueTransformationTask')
+def process_transformation(ctx):
+    ctx.task_name = 'KrazyglueTransformationTask'
+    run_luigi(ctx.task_name, '--rid-mapping', ctx.rid_mapping)
+
+@then('on récupère {counter:Int} offres KrazyGlue')
+def assert_number_of_offers(ctx, counter):
+    with open(get_task_data(ctx.task_name), 'r') as data:
+        assert len(json.load(data)) == counter
+```
+
+
+
+## Bonus: validation de types
+```python
+from behave import use_step_matcher, register_type
+
+use_step_matcher('cfparse')
+register_type(String=lambda text: text)
+register_type(Int=lambda text: int(text))
+register_type(List=lambda text: [item.strip() for item in text.split(',')])
+```
+
+
+
+## hooks
+```python
+def before_scenario_hook(context, scenario):
+    # Using a test config in luigi
+    luigi_cfg = luigi.configuration.get_config()
+    luigi_cfg._config_paths = 'path/to/test-luigi.cfg'
+    luigi_cfg.reload()
+    context.global_luigi_cfg = luigi_cfg
+
+    switch_els_to_fixture_alias(context, scenario)
+    prepare_fixture(context, scenario)
+```
+Note:
+- exemple issue directement de notre code
+- `after_all_hook` restaure l'alias Elasticsearch
+- fixtures basées sur tags -> pratique au début, puis pas simple (trop d'indirections, + gherkin indépendant des données de test)
+
+
+
+## Bonus point: coverage
+
+```bash
+cd geo         && coverage erase && py.test            && cd ..
+cd catalog     && coverage erase && py.test            && cd ..
+cd geo-bdd     && coverage erase && coverage -m behave && cd ..
+cd catalog-bdd && coverage erase && coverage -m behave && cd ..
+coverage report --show-missing
+coverage html
+```
+Note: Combine 2 ELT tests + unit tests coverage
+Flags utiles: `coverage run --rcfile=.coveragerc --source=dir1,dir2 -m behave --format=json.pretty`
+
+
+
+
+## Merci !
+Rejoignez-nous: [jobs.![voyages-sncf.com](voyages-sncf-logo.png)](https://jobs.voyages-sncf.com/)
+
+Et suivez notre actu sur [![Logo OpenVSC](openVSC-logo.jpg)](https://open.voyages-sncf.com/)
+
+Note: comparison with Airflow: http://bytepawn.com/luigi-airflow-pinball.html
+					</textarea data-template>
+				</section>
+			</div>
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			var options = {
+
+                history: true,
+
+                dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			};
+            if (/showNotes/.test(location.search)) {
+                options.showNotes = true; // for PDF export to include notes
+            }
+            Reveal.initialize(options);
+            document.onclick = function (event) {
+                Reveal.next();
+            };
+		</script>
+	</body>
+</html>
