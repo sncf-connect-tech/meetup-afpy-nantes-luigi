@@ -119,7 +119,7 @@ Note: batch d'agrégation & validation, avec comme destination un index ElasticS
 
 
 
-##  
+### 😞
 <!-- .slide: data-background="black" -->
 <img src="pipelines-screensaver.jpg" alt="L'économiseur d'écran Windows avec des tuyaux" style="max-height: 40rem">
 
@@ -145,12 +145,15 @@ Source: https://luigi.readthedocs.io/en/latest/design_and_limitations.html
 
 
 ## Défis rencontrés
-- séparer données & métadonnées
-- exécution sélective:
-  * une seule tâche
-  * une branche
-- tâches "tampons" de cache (_staging_)
-- historisation & purge des anciennes données
+<ul>
+  <li class="fragment">séparer <span style="color:#2aa198">données</span> & <span style="color:#6c71c4">métadonnées</span></li>
+  <li class="fragment">exécution sélective:<ul>
+    <li>une seule tâche</li>
+    <li>une branche</li>
+  </ul></li>
+  <li class="fragment">tâches "tampons" de cache (_staging_)</li>
+  <li class="fragment">historisation & purge des anciennes données</li>
+</ul>
 
 
 
@@ -164,6 +167,12 @@ Note:
 - supervision = temps d'exécution, resources consommées...
 - centralisation des logs: capture d'exceptions + envoie dans Graphite / Flume
 - upload dans Elasticsearch : en batch + avec bascule d'alias
+
+
+
+##  
+<img src="Luigi_Task_Visualiser.png" alt="Exemple de graph luigi" style="height: 50rem">
+Note: pointer les tâches de _staging_
 
 
 
@@ -181,54 +190,10 @@ Note:
   * notre solution: https://gist.github.com/Lucas-C/2ba14f253186e8df079219a3038e7d94
 
 
+
 ## behave : gherkin
 ```gherkin
 Feature: showing off behave
-
-  Scenario: run a simple test
-    Given we have behave installed
-    When we implement a test
-    Then behave will test it for us!
-```
-
-
-## behave : glue
-```python
-from behave import *
-
-@given('we have behave installed')
-def step_impl(context):
-    pass
-
-@when('we implement a test')
-def step_impl(context):
-    assert True is not False
-
-@then('behave will test it for us!')
-def step_impl(context):
-    assert context.failed is False
-```
-Note: demo -> `behave`
-
-
-
-## Avec luigi
-```python
-def run_luigi(etl_module, task_module, *luigi_args):
-    args = ['--local-scheduler', '--no-lock']
-    args += ['--module', etl_module, task_module]
-    args.extend(luigi_args)
-    Register.clear_instance_cache()  # very important
-    with supervision(disable=True):  # in-house
-        luigi.interface._run(args)
-```
-Note:
-- `enable_supervision`
-
-
-
-## Exemple
-```gherkin
   Scénario: Import des offres KrazyGlue
     Soit les informations de mapping suivantes :
       | RRCode | regionId | cityName |
@@ -240,7 +205,7 @@ Note:
 
 
 
-## Exemple
+## behave : glue
 ```python
 @given('les informations de mapping suivantes')
 def set_destinations(ctx):
@@ -257,6 +222,20 @@ def process_transformation(ctx):
 def assert_number_of_offers(ctx, counter):
     with open(get_task_data(ctx.task_name), 'r') as data:
         assert len(json.load(data)) == counter
+```
+Note: demo -> `behave`
+
+
+
+## Runner luigi
+```python
+def run_luigi(etl_module, task_module, *luigi_args):
+    args = ['--local-scheduler', '--no-lock']
+    args += ['--module', etl_module, task_module]
+    args.extend(luigi_args)
+    Register.clear_instance_cache()  # very important
+    with supervision(disable=True):  # in-house
+        luigi.interface._run(args)
 ```
 
 
@@ -289,6 +268,11 @@ Note:
 - exemple issue directement de notre code
 - `after_all_hook` restaure l'alias Elasticsearch
 - fixtures basées sur tags -> pratique au début, puis pas simple (trop d'indirections, + gherkin indépendant des données de test)
+
+
+
+##  
+[<img src="zucchini-report.png" alt="Exemple de rapport Zucchini">](zucchini-report.png)
 
 
 
