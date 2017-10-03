@@ -65,8 +65,7 @@
 ## Pipelines luigi & tests BDD behave
 <figure>
     <img src="ceci-nest-pas-un-pipe.jpg" alt="Ceci n'est pas un pipe, mais un tuyau dans Mario" style="max-height: 35rem">
-    <figcaption>Modification d'un <a href="https://www.threadless.com/product/543/this_is_not_a_pipe">motif de T-shirt</a> par <a href="https://www.facebook.com/littlegdesign">
-Little g Design</a></figcaption>
+    <figcaption>Modification d'un <a href="https://www.threadless.com/product/543/this_is_not_a_pipe">motif de T-shirt</a> par <a href="https://www.facebook.com/littlegdesign">Little g Design</a></figcaption>
 </figure>
 
 <small>3/10/2017</small>
@@ -100,9 +99,9 @@ Note:
 
 
 ## Au menu
-<img src="luigi-logo.png" alt="Logo luigi" style="box-shadow: none">
+[<img src="luigi-logo.png" alt="Logo luigi" style="box-shadow: none">](http://luigi.readthedocs.io/en/stable/index.html)
 +
-![Logo behave](behave_logo1.png)
+[![Logo behave](behave_logo1.png)](http://pythonhosted.org/behave/)
 
 
 
@@ -126,16 +125,25 @@ Note: batch d'agrégation & validation, avec comme destination un index ElasticS
 
 
 ## luigi
+<figure>
+    <img src="luigi-in-car.png" alt="Le personnage de jeu vidéo Luigi dans une voiture" style="max-height: 35rem">
+    <figcaption><a href="https://dribbble.com/shots/3460043-Luigi">Illustration</a> de <a href="https://dribbble.com/Dmitrij">Dmitrij</a> de Fireart Studio</figcaption>
+</figure>
+Note:
+- initiallement conçu par Erik Bernhardsson pour de la recommendation de chansons
+- open-sourcé par lui et Elias Freider à Spotify en 2013
+- utilisé par des centaines d'entreprises dont: Foursquare, Stripe, Groupon, Red Hat...
+
+
+
+## luigi
 ![Description des principaux concepts de luigi](luigi-concepts.jpg)
 Note:
 - direct acyclic graph
-- fournit: découpage en tâches imposées, gestion des dépendances, `resume` tasks on error
 - idéal pour du batch
-- limites:
-  * pas de scheduler "builtin" -> `cron`
-  * pas d'exécution distribuée
-  * nombre de tâches < 10 000
-Source: https://luigi.readthedocs.io/en/latest/design_and_limitations.html
+- fournit: découpage en tâches imposées, gestion des dépendances, visualisation, et surtout: `resume` tasks on error
+- + supporte multi-process-workers
+- limites: pas de scheduler "builtin" -> `cron`
 
 
 
@@ -149,11 +157,12 @@ Source: https://luigi.readthedocs.io/en/latest/design_and_limitations.html
   <li class="fragment">séparer <span style="color:#2aa198">données</span> & <span style="color:#6c71c4">métadonnées</span></li>
   <li class="fragment">exécution sélective:<ul>
     <li>une seule tâche</li>
-    <li>une branche</li>
+    <li>une seule branche</li>
   </ul></li>
   <li class="fragment">tâches "tampons" de cache (_staging_)</li>
   <li class="fragment">historisation & purge des anciennes données</li>
 </ul>
+Note: métadonnées = status, timestamp, nombre d'offres en sortie, erreurs & warnings... + offres rejetées
 
 
 
@@ -162,9 +171,9 @@ Implémente tout ça, plus:
 - supervision des tâches
 - centralisation des logs
 - upload dans Elasticsearch
-- lecture / écriture de JSON itérative avec `ijson`
+- lecture / écriture de JSON en flux avec `ijson`
 Note:
-- supervision = temps d'exécution, resources consommées...
+- supervision = durée d'exécution, ressources consommées...
 - centralisation des logs: capture d'exceptions + envoie dans Graphite / Flume
 - upload dans Elasticsearch : en batch + avec bascule d'alias
 
@@ -173,6 +182,21 @@ Note:
 ##  
 <img src="Luigi_Task_Visualiser.png" alt="Exemple de graph luigi" style="height: 50rem">
 Note: pointer les tâches de _staging_
+Transition: comment tester le code métier ?
++ nécessité d'uniformisation
+
+
+
+## En prod
+<img src="sonatype-nexus-logo.png" alt="Logo Nexus Sonatype" style="max-width: 15rem; box-shadow: none">
++
+<img src="logo-anaconda.png" alt="Logo Anaconda" style="max-width: 15rem; box-shadow: none">
+
+<p class="fragment">+ ![Logo Tornado](tornado-logo.png) <span style="font-size: 1.5rem">pour exposer nos <span style="color:#6c71c4">métadonnées</span> JSON</span></p>
+Note:
+- le Nexus nous sert de cache à Pypi
+- Anaconda est employé car prisé de nos _data-scientists_
+- pq Tornado ? -> utilisé par luigi
 
 
 
@@ -183,17 +207,15 @@ Note: pointer les tâches de _staging_
 Catholic Cuisine</a></figcaption>
 </figure>
 = tests <em>Cucumber</em> pour **Python**
-Note:
-- test runner (not compatible with `pytest`)
-- cucumber-compatible output:
-  * https://github.com/behave/behave/issues/267
-  * notre solution: https://gist.github.com/Lucas-C/2ba14f253186e8df079219a3038e7d94
+Note: test runner (not compatible with `pytest`)
+D'après la doc, utilisable avec Django
 
 
 
 ## behave : gherkin
 ```gherkin
 Feature: showing off behave
+  @fixture-integ
   Scénario: Import des offres KrazyGlue
     Soit les informations de mapping suivantes :
       | RRCode | regionId | cityName |
@@ -202,6 +224,7 @@ Feature: showing off behave
     Quand le catalogue exécute la tâche KrazyGlueTransformationTask
     Alors on récupère 4 offres KrazyGlue
 ```
+Note: supporte aussi les _scenario outlines_
 
 
 
@@ -223,7 +246,6 @@ def assert_number_of_offers(ctx, counter):
     with open(get_task_data(ctx.task_name), 'r') as data:
         assert len(json.load(data)) == counter
 ```
-Note: demo -> `behave`
 
 
 
@@ -247,8 +269,14 @@ from behave import use_step_matcher, register_type
 use_step_matcher('cfparse')
 register_type(String=lambda text: text)
 register_type(Int=lambda text: int(text))
-register_type(List=lambda text: [item.strip() for item in text.split(',')])
+register_type(List=lambda text: [w.strip() for w in text.split(',')])
 ```
+
+
+
+##  
+[<img src="zucchini-report.png" alt="Exemple de rapport Zucchini">](zucchini-report.png)
+Note: cf. our Github + merci à Pierre Gentile
 
 
 
@@ -271,23 +299,32 @@ Note:
 
 
 
-##  
-[<img src="zucchini-report.png" alt="Exemple de rapport Zucchini">](zucchini-report.png)
+## CLI
+```bash
+behave --outfile report.json \
+       --format=json.pretty \
+       --no-capture --no-capture-stderr \
+       --tags=-@fixture-integ
+```
+<img src="behave-street-art.jpg" alt="Graff BEHAVE" style="max-height: 20rem">
+Note: cucumber-compatible output:
+  * https://github.com/behave/behave/issues/267
+  * notre solution: https://gist.github.com/Lucas-C/2ba14f253186e8df079219a3038e7d94
 
 
 
 ## Bonus point: coverage
 
 ```bash
-cd geo         && coverage erase && py.test            && cd ..
-cd catalog     && coverage erase && py.test            && cd ..
-cd geo-bdd     && coverage erase && coverage -m behave && cd ..
-cd catalog-bdd && coverage erase && coverage -m behave && cd ..
+cd geo         && coverage erase && py.test                && cd ..
+cd catalog     && coverage erase && py.test                && cd ..
+cd geo-bdd     && coverage erase && coverage run -m behave && cd ..
+cd catalog-bdd && coverage erase && coverage run -m behave && cd ..
 coverage report --show-missing
 coverage html
 ```
 Note: Combine 2 ELT tests + unit tests coverage
-Flags utiles: `coverage run --rcfile=.coveragerc --source=dir1,dir2 -m behave --format=json.pretty`
+Options utiles: `coverage run --rcfile=.coveragerc --source=dir1,dir2`
 
 
 
@@ -297,7 +334,7 @@ Rejoignez-nous: [jobs.![voyages-sncf.com](voyages-sncf-logo.png)](https://jobs.v
 
 Et suivez notre actu sur [![Logo OpenVSC](openVSC-logo.jpg)](https://open.voyages-sncf.com/)
 
-Note: comparison with Airflow: http://bytepawn.com/luigi-airflow-pinball.html
+Note: comparaison avec Airflow: http://bytepawn.com/luigi-airflow-pinball.html
 					</textarea data-template>
 				</section>
 			</div>
